@@ -1,0 +1,21 @@
+# Netlify build + edge-proxy config.
+# The browser only ever calls same-origin "/glpi/*" paths; Netlify proxies them
+# server-side to GLPI, so there is NO CORS in production (same as the dev proxy).
+
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Proxy GLPI API calls (must come BEFORE the SPA fallback below).
+# /glpi/api.php/foo  ->  https://vr.in1.glpi-network.cloud/api.php/foo
+[[redirects]]
+  from = "/glpi/*"
+  to = "https://vr.in1.glpi-network.cloud/:splat"
+  status = 200
+  force = true
+
+# SPA fallback: every other path serves the React app.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
