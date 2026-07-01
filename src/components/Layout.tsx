@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import { LayoutDashboard, Boxes } from 'lucide-react'
 import { ASSET_TYPES } from '../config/assets'
+import { BILLING_TYPES } from '../config/billing'
 
 function navClass({ isActive }: { isActive: boolean }) {
   return `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition ${
@@ -32,6 +33,21 @@ export function Layout() {
             const Icon = t.icon
             return (
               <NavLink key={t.key} to={`/assets/${t.key}`} className={navClass}>
+                <Icon size={18} />
+                {t.label}
+              </NavLink>
+            )
+          })}
+
+          <p className="px-3 pb-1 pt-5 text-xs font-bold uppercase tracking-wider text-slate-400">Billing</p>
+          <NavLink to="/billing" end className={navClass}>
+            <LayoutDashboard size={18} />
+            Overview
+          </NavLink>
+          {BILLING_TYPES.map((t) => {
+            const Icon = t.icon
+            return (
+              <NavLink key={t.key} to={`/billing/${t.key}`} className={navClass}>
                 <Icon size={18} />
                 {t.label}
               </NavLink>

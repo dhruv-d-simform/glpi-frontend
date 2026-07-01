@@ -1,15 +1,17 @@
 import { useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Pencil, Trash2, Cpu } from 'lucide-react'
-import { assetByKey, type AssetType, type SubResourceDef } from '../config/assets'
+import { assetByKey, resolveType, typeBase, type AssetType, type SubResourceDef } from '../config/assets'
 import { useAsset, useSubResource, useDeleteAsset } from '../lib/queries'
 import type { AssetRecord, Ref } from '../api/types'
 import { AssetForm } from '../components/AssetForm'
+import { InfocomPanel } from '../components/InfocomPanel'
 import { Modal, Spinner, StatusBadge } from '../components/ui'
 
 export function AssetDetailPage() {
   const { typeKey, id } = useParams()
-  const type = assetByKey(typeKey)
+  const type = resolveType(typeKey)
+  const isPhysicalAsset = !!assetByKey(typeKey)
   const navigate = useNavigate()
   const numId = Number(id)
   const { data, isLoading } = useAsset(type!, numId)
@@ -25,7 +27,7 @@ export function AssetDetailPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-8 py-8">
-      <Link to={`/assets/${type.key}`} className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-brand-600">
+      <Link to={`/${typeBase(type)}/${type.key}`} className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-brand-600">
         <ArrowLeft size={16} /> Back to {type.label}
       </Link>
 
@@ -61,14 +63,16 @@ export function AssetDetailPage() {
             <section className="card overflow-hidden">
               <div className="flex items-center gap-2 border-b border-slate-100 px-5 py-3">
                 <Cpu size={16} className="text-slate-400" />
-                <h3 className="text-sm font-bold text-slate-700">Inventory snapshot</h3>
-                <span className="ml-auto text-xs text-slate-400">collected by agent</span>
+                <h3 className="text-sm font-bold text-slate-700">{isPhysicalAsset ? 'Inventory snapshot' : 'Notes'}</h3>
+                {isPhysicalAsset && <span className="ml-auto text-xs text-slate-400">collected by agent</span>}
               </div>
               <pre className="overflow-x-auto whitespace-pre-wrap px-5 py-4 font-mono text-xs leading-relaxed text-slate-600">
                 {String(data.comment)}
               </pre>
             </section>
           )}
+
+          {isPhysicalAsset && <InfocomPanel type={type} id={numId} />}
 
           {type.subResources?.map((sub) => (
             <SubPanel key={sub.key} type={type} id={numId} sub={sub} />
@@ -85,7 +89,7 @@ export function AssetDetailPage() {
           <>
             <button className="btn-ghost" onClick={() => setConfirm(false)} disabled={del.isPending}>Cancel</button>
             <button className="btn-danger" disabled={del.isPending}
-              onClick={async () => { await del.mutateAsync(numId); navigate(`/assets/${type.key}`) }}>
+              onClick={async () => { await del.mutateAsync(numId); navigate(`/${typeBase(type)}/${type.key}`) }}>
               {del.isPending && <Spinner className="h-4 w-4" />} Delete
             </button>
           </>

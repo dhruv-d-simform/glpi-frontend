@@ -2,6 +2,7 @@ import {
   Laptop, Monitor, Printer, Smartphone, Network, Mouse, Boxes,
   type LucideIcon,
 } from 'lucide-react'
+import { billingByKey } from './billing'
 
 export type FieldType = 'text' | 'textarea' | 'number' | 'boolean' | 'ref'
 
@@ -32,6 +33,7 @@ export interface AssetType {
   accent: string // tailwind text color class for the icon
   fields: FieldDef[]
   subResources?: SubResourceDef[]
+  base?: 'assets' | 'billing' // route prefix; defaults to "assets"
 }
 
 // Common fields shared by every asset type.
@@ -50,6 +52,16 @@ function common(itemtype: string): FieldDef[] {
     { key: 'contact', label: 'Contact', type: 'text', section: 'Assignment' },
     { key: 'comment', label: 'Notes / Inventory', type: 'textarea', section: 'Notes' },
   ]
+}
+
+// Contracts (support/maintenance/lease/telecom/subscription) linked to an asset.
+// This sub-resource returns the junction row (Computer_Contract etc), which only
+// nests the linked contract as a {id,name} ref — not the contract's own fields.
+const contractSub: SubResourceDef = {
+  key: 'Contract', label: 'Contracts & support',
+  columns: [
+    { key: 'contract', label: 'Contract', ref: true },
+  ],
 }
 
 const computerSubs: SubResourceDef[] = [
@@ -114,7 +126,7 @@ export const ASSET_TYPES: AssetType[] = [
     key: 'computers', endpoint: '/Assets/Computer', itemtype: 'Computer',
     label: 'Computers', singular: 'Computer', icon: Laptop, accent: 'text-brand-600',
     fields: common('Computer'),
-    subResources: computerSubs,
+    subResources: [...computerSubs, contractSub],
   },
   {
     key: 'monitors', endpoint: '/Assets/Monitor', itemtype: 'Monitor',
@@ -127,6 +139,7 @@ export const ASSET_TYPES: AssetType[] = [
       { key: 'has_speaker', label: 'Speakers', type: 'boolean', section: 'Ports' },
       { key: 'has_pivot', label: 'Pivot / rotate', type: 'boolean', section: 'Ports' },
     ],
+    subResources: [contractSub],
   },
   {
     key: 'printers', endpoint: '/Assets/Printer', itemtype: 'Printer',
@@ -138,6 +151,7 @@ export const ASSET_TYPES: AssetType[] = [
       { key: 'has_wifi', label: 'Wi-Fi', type: 'boolean', section: 'Ports' },
       { key: 'has_usb', label: 'USB', type: 'boolean', section: 'Ports' },
     ],
+    subResources: [contractSub],
   },
   {
     key: 'phones', endpoint: '/Assets/Phone', itemtype: 'Phone',
@@ -149,6 +163,7 @@ export const ASSET_TYPES: AssetType[] = [
       { key: 'have_headset', label: 'Headset', type: 'boolean', section: 'Features' },
       { key: 'have_hp', label: 'Speakerphone', type: 'boolean', section: 'Features' },
     ],
+    subResources: [contractSub],
   },
   {
     key: 'network', endpoint: '/Assets/NetworkEquipment', itemtype: 'NetworkEquipment',
@@ -159,6 +174,7 @@ export const ASSET_TYPES: AssetType[] = [
       { key: 'ram', label: 'RAM (MB)', type: 'number', section: 'Hardware' },
       { key: 'sysdescr', label: 'System description', type: 'text', section: 'Hardware' },
     ],
+    subResources: [contractSub],
   },
   {
     key: 'peripherals', endpoint: '/Assets/Peripheral', itemtype: 'Peripheral',
@@ -167,6 +183,7 @@ export const ASSET_TYPES: AssetType[] = [
       ...common('Peripheral'),
       { key: 'brand', label: 'Brand', type: 'text', section: 'Hardware' },
     ],
+    subResources: [contractSub],
   },
 ]
 
@@ -174,6 +191,18 @@ export const ALL_ICON = Boxes
 
 export function assetByKey(key: string | undefined): AssetType | undefined {
   return ASSET_TYPES.find((a) => a.key === key)
+}
+
+// Resolves a route type-key against both physical assets and billing/management
+// entities (Suppliers, Budgets, Contracts) — lets the generic list/detail/form
+// pages serve both without knowing which registry a key came from.
+export function resolveType(key: string | undefined): AssetType | undefined {
+  return assetByKey(key) ?? billingByKey(key)
+}
+
+// Route prefix ("assets" or "billing") a given type's list/detail pages live under.
+export function typeBase(type: AssetType): string {
+  return type.base ?? 'assets'
 }
 
 // Map a GLPI State name to a badge palette.

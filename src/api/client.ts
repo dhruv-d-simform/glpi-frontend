@@ -137,4 +137,9 @@ export const api = {
     request<T>('PATCH', `${endpoint}/${id}`, body),
   remove: (endpoint: string, id: number | string) =>
     request<unknown>('DELETE', `${endpoint}/${id}?force=true`),
+  // Raw-path variants for singleton sub-resources (e.g. Infocom) that don't
+  // fit the collection/id shape above.
+  getPath: <T>(path: string) => request<T>('GET', path),
+  postPath: <T>(path: string, body: unknown) => request<T>('POST', path, body),
+  patchPath: <T>(path: string, body: unknown) => request<T>('PATCH', path, body),
 }

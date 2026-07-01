@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Plus, Search, Pencil, Trash2, ChevronRight } from 'lucide-react'
-import { assetByKey, type AssetType } from '../config/assets'
+import { resolveType, typeBase, type AssetType } from '../config/assets'
 import { useAssets, useDeleteAsset } from '../lib/queries'
 import type { AssetRecord, Ref } from '../api/types'
 import { AssetForm } from '../components/AssetForm'
@@ -19,7 +19,7 @@ function cell(record: AssetRecord, key: string) {
 
 export function AssetListPage() {
   const { typeKey } = useParams()
-  const type = assetByKey(typeKey)
+  const type = resolveType(typeKey)
   if (!type) return <div className="p-8">Unknown asset type.</div>
   return <AssetList key={type.key} type={type} />
 }
@@ -103,7 +103,7 @@ function AssetList({ type }: { type: AssetType }) {
                 <tr
                   key={r.id}
                   className="group cursor-pointer transition hover:bg-brand-50/40"
-                  onClick={() => navigate(`/assets/${type.key}/${r.id}`)}
+                  onClick={() => navigate(`/${typeBase(type)}/${type.key}/${r.id}`)}
                 >
                   {cols.map((c, i) => (
                     <td key={c.key} className="px-4 py-3">
